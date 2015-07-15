@@ -1,0 +1,27 @@
+!!!
+%html{:lang => :zh}
+  %head
+    %title Try Rx
+    %meta{:'http-equiv' => 'Content-Type', :content => 'text/html; charset=utf-8'}
+    %meta{:name => 'viewport', :content => 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no'}
+    %link{:rel => 'stylesheet', :href => 'dist/css/ui.css'}
+
+  %body
+    .container
+      .row
+        .col-pad-6
+          .demo.demo1.common
+            %a.plus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} +1
+            %a.minus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} -1
+            %span.count 0
+
+        .col-pad-6
+          .demo.demo1.rx
+            %a.plus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} +1
+            %a.minus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} -1
+            %span.count 0
+
+    %script{:type => 'text/javascript', :src => 'http://libs.useso.com/js/jquery/2.1.1/jquery.min.js'}
+    %script{:type => 'text/javascript', :src => 'lib/rx.all.min.js'}
+
+    %script{:type => 'text/javascript', :src => 'dist/js/ui.js'}

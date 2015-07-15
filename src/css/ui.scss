@@ -1,0 +1,29 @@
+@import "../../node_modules/lily-fushang318/assets/stylesheets/lily.scss";
+
+body {
+  background-color: #f1f1f1;
+}
+
+.demo {
+  margin-top: 50px;
+
+  &.demo1 {
+    a {
+      font-weight: bold;
+      font-size: 20px;
+      height:40px;line-height:40px;
+      width:100px;
+    }
+    span.count {
+      padding: 0 30px;
+      font-weight: bold;
+      font-size: 20px;
+      line-height: 40px;
+      display: inline-block;
+      border-radius: 4px;
+      min-width: 100px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+  }
+}
