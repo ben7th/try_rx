@@ -106,11 +106,11 @@
         .col-pad-6
           .demo.demo2.common
             .control
-              %input.form-control{:type => :text, :placeholder => '搜索电影', :value => ''}
+              %input.form-control{:type => :text, :placeholder => '搜索电影', :value => '阿甘'}
               %a.do-search.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'}
                 %i.fa.fa-search
                 %span 搜索
-              
+
             .result.state-blank
               .loading
                 %i.fa.fa-circle-o-notch.fa-spin
@@ -154,7 +154,11 @@
         .col-pad-6
           .demo.demo2.rx
             .control
-              %input.form-control{:type => :text, :placeholder => '搜索电影', :value => ''}
+              %input.form-control{:type => :text, :placeholder => '搜索电影', :value => '教父'}
+              %a.do-search.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'}
+                %i.fa.fa-search
+                %span 搜索
+
             .result.state-blank
               .loading
                 %i.fa.fa-circle-o-notch.fa-spin
@@ -172,11 +176,11 @@
                 $input = $elm.find('input')
                 $result = $elm.find('.result')
 
-                ob_btn = $input.onAsObservable('input')
+                ob_btn = $elm.onAsObservable('click', 'a.do-search')
                   .map (data)-> $input.val()
+                  .filter (query)-> query.length > 0
                   .map (query)-> "https://api.douban.com/v2/movie/search?q=#{'#{query}'}"
-                  .throttle(500)
-                  .distinctUntilChanged()
+
                 ob_btn.subscribe ->
                   $result
                     .removeClass('state-blank state-loading')
@@ -189,19 +193,14 @@
                       url: url
                       dataType: 'jsonp'
                   .pluck 'data'
-                ob_search.subscribe (url)->
+                ob_search.subscribe (res)->
                   $result.removeClass('state-loading')
 
-                ob_search
-                  .filter (res)-> res.subjects.length is 0
-                  .subscribe (res)->
+                  if res.subjects.length is 0
                     $result.addClass('state-blank')
 
-                ob_search
-                  .filter (res)-> res.subjects.length > 0
-                  .subscribe (res)->
-                    for subject in res.subjects[0...5]
-                      build_list subject, $result
+                  for subject in res.subjects[0...5]
+                    build_list subject, $result
                 ```
 
 

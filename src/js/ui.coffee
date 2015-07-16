@@ -66,6 +66,8 @@ jQuery ->
       jQuery.ajax
         url: "https://api.douban.com/v2/movie/search?q=#{query}"
         dataType: 'jsonp'
+        data:
+          apikey: '0c1c004278927f31245400c769b77d93'
       .done (res)->
         $result.removeClass('state-loading')
 
@@ -83,13 +85,14 @@ jQuery ->
     $input = $elm.find('input')
     $result = $elm.find('.result')
 
-    ob_btn = $input.onAsObservable('input')
+    ob_btn = $elm.onAsObservable('click', 'a.do-search')
       .map (data)-> $input.val()
+      .filter (query)-> query.length > 0
       .map (query)-> "https://api.douban.com/v2/movie/search?q=#{query}"
-      .throttle(500)
-      .distinctUntilChanged()
+
     ob_btn.subscribe ->
       $result
+        .removeClass('state-blank state-loading')
         .addClass('state-loading')
         .find('.list').html('')
 
@@ -99,16 +102,11 @@ jQuery ->
           url: url
           dataType: 'jsonp'
       .pluck 'data'
-    ob_search.subscribe (url)->
+    ob_search.subscribe (res)->
       $result.removeClass('state-loading')
 
-    ob_search
-      .filter (res)-> res.subjects.length is 0
-      .subscribe (res)->
+      if res.subjects.length is 0
         $result.addClass('state-blank')
 
-    ob_search
-      .filter (res)-> res.subjects.length > 0
-      .subscribe (res)->
-        for subject in res.subjects[0...5]
-          build_list subject, $result
+      for subject in res.subjects[0...5]
+        build_list subject, $result

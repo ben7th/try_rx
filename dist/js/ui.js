@@ -58,7 +58,10 @@
         $result.removeClass('state-blank state-loading').addClass('state-loading').find('.list').html('');
         return jQuery.ajax({
           url: "https://api.douban.com/v2/movie/search?q=" + query,
-          dataType: 'jsonp'
+          dataType: 'jsonp',
+          data: {
+            apikey: '0c1c004278927f31245400c769b77d93'
+          }
         }).done(function(res) {
           var i, len, ref, results, subject;
           $result.removeClass('state-loading');
@@ -83,13 +86,15 @@
       $elm = jQuery('.demo.demo2.rx');
       $input = $elm.find('input');
       $result = $elm.find('.result');
-      ob_btn = $input.onAsObservable('input').map(function(data) {
+      ob_btn = $elm.onAsObservable('click', 'a.do-search').map(function(data) {
         return $input.val();
+      }).filter(function(query) {
+        return query.length > 0;
       }).map(function(query) {
         return "https://api.douban.com/v2/movie/search?q=" + query;
-      }).throttle(500).distinctUntilChanged();
+      });
       ob_btn.subscribe(function() {
-        return $result.addClass('state-loading').find('.list').html('');
+        return $result.removeClass('state-blank state-loading').addClass('state-loading').find('.list').html('');
       });
       ob_search = ob_btn.flatMapLatest(function(url) {
         return jQuery.ajaxAsObservable({
@@ -97,18 +102,12 @@
           dataType: 'jsonp'
         });
       }).pluck('data');
-      ob_search.subscribe(function(url) {
-        return $result.removeClass('state-loading');
-      });
-      ob_search.filter(function(res) {
-        return res.subjects.length === 0;
-      }).subscribe(function(res) {
-        return $result.addClass('state-blank');
-      });
-      return ob_search.filter(function(res) {
-        return res.subjects.length > 0;
-      }).subscribe(function(res) {
+      return ob_search.subscribe(function(res) {
         var i, len, ref, results, subject;
+        $result.removeClass('state-loading');
+        if (res.subjects.length === 0) {
+          $result.addClass('state-blank');
+        }
         ref = res.subjects.slice(0, 5);
         results = [];
         for (i = 0, len = ref.length; i < len; i++) {
