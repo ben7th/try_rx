@@ -1,12 +1,48 @@
+$source-code-font-path: "../../fonts/source-code";
+$fa-font-path: "../../fonts";
+
 @import "../../node_modules/lily-fushang318/assets/stylesheets/lily.scss";
+@import "syntax-highlighting";
 
 body {
   background-color: #f1f1f1;
+  padding-top: 50px;
+  padding-bottom: 100px;
+
+  .row.d1 {
+    padding-bottom: 40px;
+    margin-bottom: 40px;
+    border-bottom: dashed 1px #ccc;
+  }
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 30px;
+  }
+}
+
+.intro {
+  .ref {margin-bottom: 10px;}
+  .ref .name {font-weight: bold;}
+  padding-bottom: 40px;
+  margin-bottom: 40px;
+  border-bottom: dashed 1px #ccc;
+}
+
+.democode {
+  max-width: 500px;
+  margin-top: 30px;
+  pre {
+    border:0 none;
+    border-radius: 3px;
+    background-color: #f8f5ec;
+    font-size: 14px;
+    color: #637c84;
+    font-family: "source-code", '微软雅黑' !important;
+  }
 }
 
 .demo {
-  margin-top: 50px;
-
   &.demo1 {
     a {
       font-weight: bold;
@@ -24,6 +60,78 @@ body {
       min-width: 100px;
       box-sizing: border-box;
       text-align: center;
+    }
+  }
+
+  &.demo2 {
+    .control {
+      @include clearfix;
+      margin-bottom: 15px;
+      input {
+        float: left;
+        width: 300px;
+      }
+      a.do-search {
+        float: left;
+        height:34px;line-height:34px;
+        margin-left: 15px;
+      }
+    }
+    .result {
+      max-width: 400px;
+      position: relative;
+      clear: both;
+      .loading, .blank {height:30px;line-height: 30px;display:none;}
+      .loading, .blank { opacity: 0.5;}
+
+      &.state-loading .loading {display:block;position:absolute;top:-46px;left:275px;}
+      &.state-blank .blank {display:block;}
+
+      .list .movie {
+        @include clearfix;
+        background-color: #fafafa;
+        padding:10px;
+        display: block;
+        color: #333;
+        margin-bottom: 5px;
+        box-sizing: border-box;
+        text-decoration: none;
+        position: relative;
+        &:hover {
+          background-color: $area-dawn;
+        }
+
+        .img {
+          float: left;
+          width: 50px;
+          height: 50px;
+          background-size: cover;
+          margin-right: 15px;
+        }
+        .title {
+          display: block;
+          font-size: 20px;
+          height: 20px;
+          line-height: 20px;
+        }
+        .year {
+          display: block;
+          color: darken(red, 15%);
+          font-size: 16px;
+          height: 16px;
+          line-height: 16px;
+          margin-top: 14px;
+        }
+        .rating {
+          position: absolute;
+          height: 50px;line-height: 50px;
+          top:10px;right:15px;
+          font-size: 24px;
+          font-weight: bold;
+          color: $area-info;
+          font-family: "source-code";
+        }
+      }
     }
   }
 }

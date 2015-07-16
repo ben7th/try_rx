@@ -1,3 +1,19 @@
+:ruby
+  require 'rubygems'
+  require 'redcarpet'
+  require 'pygments'
+
+  class HTMLwithPygments < Redcarpet::Render::HTML
+    def block_code(code, language)
+      Pygments.highlight(code, lexer: language)
+    end
+  end
+
+  def code(&block)
+    markdown = Redcarpet::Markdown.new HTMLwithPygments, :fenced_code_blocks => true
+    markdown.render capture_haml(&block)
+  end
+
 !!!
 %html{:lang => :zh}
   %head
@@ -9,19 +25,189 @@
   %body
     .container
       .row
+        .col-pad-12
+          .intro
+            .ref
+              .name RxJS
+              %a{:href => 'https://github.com/Reactive-Extensions/RxJS', :target => '_blank'} https://github.com/Reactive-Extensions/RxJS
+
+            .ref
+              .name rxjs-jquery
+              %a{:href => 'https://github.com/Reactive-Extensions/rxjs-jquery', :target => '_blank'} https://github.com/Reactive-Extensions/rxjs-jquery
+
+            .ref
+              .name 参考资料
+              %a{:href => 'https://github.com/benjycui/introrx-chinese-edition', :target => '_blank'} https://github.com/benjycui/introrx-chinese-edition
+
+            .ref
+              .name The Reactive Manifesto
+              %a{:href => 'http://www.reactivemanifesto.org/', :target => '_blank'} http://www.reactivemanifesto.org/
+
+
+      .row.d1
+        .col-pad-12
+          %h3 demo1: 按键数字加减
+
         .col-pad-6
           .demo.demo1.common
             %a.plus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} +1
             %a.minus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} -1
             %span.count 0
 
+          .democode
+            ~ code do
+              :plain
+                ```coffee
+                # common methods
+
+                $elm = jQuery('.demo.demo1.common')
+                $count = $elm.find('span.count')
+                num = 0
+
+                $elm.on 'click', 'a.plus', ->
+                  num += 1
+                  $count.text num
+
+                $elm.on 'click', 'a.minus', ->
+                  num -= 1
+                  $count.text num
+                ```
+
+
         .col-pad-6
           .demo.demo1.rx
             %a.plus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} +1
             %a.minus.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'} -1
             %span.count 0
+          .democode
+            ~ code do
+              :plain
+                ```coffee
+                # rx methods
+
+                $elm = jQuery('.demo.demo1.rx')
+                $count = $elm.find('span.count')
+                num = 0
+
+                ob_plus = $elm.onAsObservable('click', 'a.plus').map(1)
+                ob_minus = $elm.onAsObservable('click', 'a.minus').map(-1)
+
+                Rx.Observable
+                  .merge(ob_plus, ob_minus)
+                  .subscribe (num_change)->
+                    num += num_change
+                    $count.text num
+                ```
+
+      .row.d2
+        .col-pad-12
+          %h3 demo2: 电影搜索
+
+        .col-pad-6
+          .demo.demo2.common
+            .control
+              %input.form-control{:type => :text, :placeholder => '搜索电影', :value => ''}
+              %a.do-search.btn.btn-rounded.btn-flat-night{:href => 'javascript:;'}
+                %i.fa.fa-search
+                %span 搜索
+              
+            .result.state-blank
+              .loading
+                %i.fa.fa-circle-o-notch.fa-spin
+
+              .blank 没有搜索结果
+              .list
+
+          .democode
+            ~ code do
+              :plain
+                ```coffee
+                # common methods
+
+                $elm = jQuery('.demo.demo2.common')
+                $input = $elm.find('input')
+                $result = $elm.find('.result')
+
+                $elm.on 'click', 'a.do-search', ->
+                  query = $input.val()
+                  return if query.length is 0
+
+                  $result
+                    .removeClass('state-blank state-loading')
+                    .addClass('state-loading')
+                    .find('.list').html('')
+
+                  jQuery.ajax
+                    url: "https://api.douban.com/v2/movie/search?q=#{'#{query}'}"
+                    dataType: 'jsonp'
+                  .done (res)->
+                    $result.removeClass('state-loading')
+
+                    if res.subjects.length is 0
+                      $result.addClass('state-blank')
+
+                    for subject in res.subjects[0...5]
+                      build_list subject, $result
+                ```
+
+
+        .col-pad-6
+          .demo.demo2.rx
+            .control
+              %input.form-control{:type => :text, :placeholder => '搜索电影', :value => ''}
+            .result.state-blank
+              .loading
+                %i.fa.fa-circle-o-notch.fa-spin
+
+              .blank 没有搜索结果
+              .list
+
+          .democode
+            ~ code do
+              :plain
+                ```coffee
+                # rx methods
+
+                $elm = jQuery('.demo.demo2.rx')
+                $input = $elm.find('input')
+                $result = $elm.find('.result')
+
+                ob_btn = $input.onAsObservable('input')
+                  .map (data)-> $input.val()
+                  .map (query)-> "https://api.douban.com/v2/movie/search?q=#{'#{query}'}"
+                  .throttle(500)
+                  .distinctUntilChanged()
+                ob_btn.subscribe ->
+                  $result
+                    .removeClass('state-blank state-loading')
+                    .addClass('state-loading')
+                    .find('.list').html('')
+
+                ob_search = ob_btn
+                  .flatMapLatest (url)->
+                    jQuery.ajaxAsObservable
+                      url: url
+                      dataType: 'jsonp'
+                  .pluck 'data'
+                ob_search.subscribe (url)->
+                  $result.removeClass('state-loading')
+
+                ob_search
+                  .filter (res)-> res.subjects.length is 0
+                  .subscribe (res)->
+                    $result.addClass('state-blank')
+
+                ob_search
+                  .filter (res)-> res.subjects.length > 0
+                  .subscribe (res)->
+                    for subject in res.subjects[0...5]
+                      build_list subject, $result
+                ```
+
+
 
     %script{:type => 'text/javascript', :src => 'http://libs.useso.com/js/jquery/2.1.1/jquery.min.js'}
-    %script{:type => 'text/javascript', :src => 'lib/rx.all.min.js'}
+    %script{:type => 'text/javascript', :src => 'lib/rx.lite.min.js'}
+    %script{:type => 'text/javascript', :src => 'lib/rx.jquery.min.js'}
 
     %script{:type => 'text/javascript', :src => 'dist/js/ui.js'}

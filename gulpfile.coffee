@@ -40,6 +40,7 @@ gulp.task 'css', ->
 
 gulp.task 'html', ->
   gulp.src app.src.html
+    .pipe plumber()
     .pipe haml()
     .pipe gulp.dest(app.dist.html)
 

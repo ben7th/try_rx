@@ -2,40 +2,113 @@
 jQuery ->
   if jQuery('.demo.demo1.common').length
     $elm = jQuery('.demo.demo1.common')
-
     $count = $elm.find('span.count')
-    $count.data('num', 0)
+    num = 0
 
     $elm.on 'click', 'a.plus', ->
-      num = $count.data('num') + 1
-      $count
-        .text num
-        .data 'num', num
+      num += 1
+      $count.text num
 
     $elm.on 'click', 'a.minus', ->
-      num = $count.data('num') - 1
-      $count
-        .text num
-        .data 'num', num
+      num -= 1
+      $count.text num
 
 
 jQuery ->
   if jQuery('.demo.demo1.rx').length
     $elm = jQuery('.demo.demo1.rx')
-    $plus_btn = $elm.find('a.plus')
-    $minus_btn = $elm.find('a.minus')
+    $count = $elm.find('span.count')
     num = 0
 
-    ob_plus = Rx.Observable
-      .fromEvent $plus_btn[0], 'click'
-      .map ->
-        num = num + 1
+    ob_plus = $elm.onAsObservable('click', 'a.plus').map(1)
+    ob_minus = $elm.onAsObservable('click', 'a.minus').map(-1)
 
-    ob_minus = Rx.Observable
-      .fromEvent $minus_btn[0], 'click'
-      .map ->
-        num = num - 1
+    Rx.Observable
+      .merge(ob_plus, ob_minus)
+      .subscribe (num_change)->
+        num += num_change
+        $count.text num
 
-    ob = Rx.Observable.merge ob_plus, ob_minus
-    ob.subscribe (num)->
-      $elm.find('span.count').text num
+
+build_list = (subject, $result)->
+  imgurl = subject.images.small
+  title = subject.title
+  year = subject.year
+  rating = subject.rating.average
+  alt = subject.alt
+
+  $dom = jQuery """
+    <a class='movie' href='#{alt}' target='_blank'>
+      <div class='img' style='background-image:url(#{imgurl})'></div>
+      <span class='title'>#{title}</span>
+      <span class='year'>#{year}</span>
+      <span class='rating'>#{rating}</span>
+    </a>
+  """
+    .appendTo $result.find('.list')
+
+
+jQuery ->
+  if jQuery('.demo.demo2.common').length
+    $elm = jQuery('.demo.demo2.common')
+    $input = $elm.find('input')
+    $result = $elm.find('.result')
+
+    $elm.on 'click', 'a.do-search', ->
+      query = $input.val()
+      return if query.length is 0
+
+      $result
+        .removeClass('state-blank state-loading')
+        .addClass('state-loading')
+        .find('.list').html('')
+
+      jQuery.ajax
+        url: "https://api.douban.com/v2/movie/search?q=#{query}"
+        dataType: 'jsonp'
+      .done (res)->
+        $result.removeClass('state-loading')
+
+        if res.subjects.length is 0
+          $result.addClass('state-blank')
+
+        for subject in res.subjects[0...5]
+          build_list subject, $result
+        
+
+
+jQuery ->
+  if jQuery('.demo.demo2.rx').length
+    $elm = jQuery('.demo.demo2.rx')
+    $input = $elm.find('input')
+    $result = $elm.find('.result')
+
+    ob_btn = $input.onAsObservable('input')
+      .map (data)-> $input.val()
+      .map (query)-> "https://api.douban.com/v2/movie/search?q=#{query}"
+      .throttle(500)
+      .distinctUntilChanged()
+    ob_btn.subscribe ->
+      $result
+        .addClass('state-loading')
+        .find('.list').html('')
+
+    ob_search = ob_btn
+      .flatMapLatest (url)->
+        jQuery.ajaxAsObservable
+          url: url
+          dataType: 'jsonp'
+      .pluck 'data'
+    ob_search.subscribe (url)->
+      $result.removeClass('state-loading')
+
+    ob_search
+      .filter (res)-> res.subjects.length is 0
+      .subscribe (res)->
+        $result.addClass('state-blank')
+
+    ob_search
+      .filter (res)-> res.subjects.length > 0
+      .subscribe (res)->
+        for subject in res.subjects[0...5]
+          build_list subject, $result
